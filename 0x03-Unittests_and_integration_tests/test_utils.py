@@ -1,79 +1,46 @@
 #!/usr/bin/env python3
-""" test_access_nested_map Unit test class """
 
-from typing import (
-    Mapping,
-    Sequence,
-    Any,
-    Dict,
-    Callable,
-)
+'''
+Parametise a unit test
+'''
+
 import unittest
-import requests
-from utils import access_nested_map, get_json
-from parameterized import parameterized, parameterized_class
-from unittest.mock import Mock, patch
-
-anm = access_nested_map
-gj = get_json
+from parameterized import parameterized
+from unittest.mock import patch
+from utils import access_nested_map
 
 
 class TestAccessNestedMap(unittest.TestCase):
-    """ test access nested map utils function """
+    """ tests the function for following inputs """
     @parameterized.expand([
         ({"a": 1}, ("a",), 1),
         ({"a": {"b": 2}}, ("a",), {"b": 2}),
-        ({"a": {"b": 2}}, ("a", "b"), 2)
+        ({"a": {"b": 2}}, ("a", "b"), 2),
     ])
-    def test_access_nested_map(self, nested_map, path, expect):
-        """ 0. Parameterize a unit test """
-        self.assertEqual(anm(nested_map, path), expect)
+    def test_access_nested_map(self, nested_map, path, result):
+        """ method to test that the method returns what it should """
+        self.assertEqual(access_nested_map(nested_map, path), result)
 
     @parameterized.expand([
         ({}, ("a",)),
-        ({"a": 1}, ("a", "b"))
+        ({"a": 1}, ("a", "b")),
     ])
     def test_access_nested_map_exception(self, nested_map, path):
-        """" 1. Parameterize a unit test """
-        with self.assertRaises(KeyError):
-            anm(nested_map, path)
+        """ Tests that a key error is raised """
+        with self.assertRaises(KeyError) as error:
+            access_nested_map(nested_map, path)
+        self.assertEqual(error.exception.args[0], path[-1])
 
 
 class TestGetJson(unittest.TestCase):
-    """ Test utils Get Json function """
+    """ Tests that the function utils.get_json returns expected result """
     @parameterized.expand([
         ("http://example.com", {"payload": True}),
-        ("http://holberton.io", {"payload": False})
+        ("http://holberton.io", {"payload": False}),
     ])
-    def test_get_json(self, url, payload):
-        """ 2. Mock HTTP calls """
-        with patch('utils.requests.get') as mock_get:
-            mock_get.return_value.json.return_value = payload
-            # res = gj(url)
-            self.assertEqual(gj(url), payload)
-            mock_get.assert_called_once()
-
-
-class TestMemoize(unittest.TestCase):
-    """ 3. Parameterize and patch """
-    def test_memoize():
-        """ memoize test class """
-        @patch('utils.memoize')
-        class TestClass:
-            """ test class """
-
-            def a_method(self):
-                """ a method """
-                return 42
-
-            @memoize
-            def a_property(self):
-                """ a property """
-                return self.a_method()
-
-    with @patch('utils.a_property') as mock_prop:
-        pass
-
-
-if __name__ == '__main__':
-    unittest.main()
+    @patch('test_utils.get_json')
+    def test_get_json(self, test_url, test_payload, mock_get):
+        """ tests utils.get_json returns the expected result """
+        mock_get.return_value = test_payload
+        res = get_json(test_url)
+        self.assertEqual(res, test_payload)
